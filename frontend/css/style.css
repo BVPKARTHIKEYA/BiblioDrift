@@ -8254,3 +8254,8 @@ dialog.book-preview-modal::backdrop {
         font-size: 0.95rem;
     }
 }
+
+.spine-title,
+.spine-author {
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6), 0 0 8px rgba(0, 0, 0, 0.4);
+}
