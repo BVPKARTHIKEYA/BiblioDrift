@@ -2009,7 +2009,40 @@ class BookshelfRenderer3D {
 
     let spineColor = book.spineColor;
     let textColor = book.textColor;
+    // Helper: get relative luminance of any CSS color
+    const getLuminance = (color) => {
+        try {
+            const canvas = document.createElement('canvas');
+            canvas.width = canvas.height = 1;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = color;
+            ctx.fillRect(0, 0, 1, 1);
+            const [r, g, b] = ctx.getImageData(0, 0, 1, 1).data;
+            const toLinear = c => {
+                const s = c / 255;
+                return s <= 0.04045 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+            };
+            return 0.2126 * toLinear(r) + 0.7152 * toLinear(g) + 0.0722 * toLinear(b);
+        } catch (e) {
+            return 0.5;
+        }
+    };
 
+    let spineColor = book.spineColor;
+    let textColor = book.textColor;
+
+    if (!spineColor) {
+        const hue = Math.floor(rand(1) * 360);
+        const sat = 40 + Math.floor(rand(2) * 40);
+        const lig = 25 + Math.floor(rand(3) * 35);
+        spineColor = `hsl(${hue}, ${sat}%, ${lig}%)`;
+        textColor = lig < 50 ? '#f0f0f0' : '#1a1a1a';
+    } else {
+        // Always recompute textColor based on actual spine luminance for contrast
+        const lum = getLuminance(spineColor);
+        // WCAG contrast: use light text on dark bg (lum < 0.179), dark text on light bg
+        textColor = lum < 0.35 ? '#f5f0e8' : '#1a1209';
+    }
     if (!spineColor) {
         const hue = Math.floor(rand(1) * 360);
         const sat = 40 + Math.floor(rand(2) * 40);
@@ -2029,7 +2062,18 @@ class BookshelfRenderer3D {
     else if (rTex < 0.7) texture = 'spine-texture-cloth';
     else if (rTex < 0.9) texture = 'spine-texture-paper';
     else texture = 'spine-texture-worn';
+    const rTex = rand(4);
+    let texture = 'spine-texture-paper';
+    if (rTex < 0.4) texture = 'spine-texture-leather';
+    else if (rTex < 0.7) texture = 'spine-texture-cloth';
+    else if (rTex < 0.9) texture = 'spine-texture-paper';
+    else texture = 'spine-texture-worn';
 
+    const rFont = rand(5);
+    let fontClass = '';
+    if (rFont < 0.3) fontClass = 'font-serif';
+    else if (rFont < 0.6) fontClass = 'font-sans';
+    else if (rFont < 0.8) fontClass = 'font-hand';
     const rFont = rand(5);
     let fontClass = '';
     if (rFont < 0.3) fontClass = 'font-serif';
@@ -2041,7 +2085,16 @@ class BookshelfRenderer3D {
     if (rPat < 0.2) pattern = 'spine-pattern-bands';
     else if (rPat < 0.3) pattern = 'spine-pattern-frame';
     else if (rPat < 0.4) pattern = 'spine-pattern-ornament';
+    const rPat = rand(6);
+    let pattern = '';
+    if (rPat < 0.2) pattern = 'spine-pattern-bands';
+    else if (rPat < 0.3) pattern = 'spine-pattern-frame';
+    else if (rPat < 0.4) pattern = 'spine-pattern-ornament';
 
+    const rMod = rand(7);
+    let titleModifier = '';
+    if (book.title.length < 10 && rMod < 0.2) titleModifier = 'title-stacked';
+    else if (rMod > 0.9) titleModifier = 'title-rotate-up';
     const rMod = rand(7);
     let titleModifier = '';
     if (book.title.length < 10 && rMod < 0.2) titleModifier = 'title-stacked';
